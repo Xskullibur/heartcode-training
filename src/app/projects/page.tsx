@@ -1,3 +1,5 @@
 export default function Home() {
-  return <div>Project Main Page</div>;
+  return (
+    <div>Project Main Page</div>
+  );
 }
