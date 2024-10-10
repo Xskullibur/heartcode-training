@@ -11,17 +11,31 @@ export default function Leaderboard() {
     { name: string; id: string; quizScore: number }[]
   >([]);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchTopScores() {
       try {
         const scores = await getTopScores();
-        setTopScores(scores);
+        if (isMounted) {
+          setTopScores(scores);
+          setIsLoading(false);
+        }
       } catch (error) {
         console.error("Failed to fetch top scores:", error);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchTopScores();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -33,39 +47,46 @@ export default function Leaderboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-4">
-            {topScores.map((entry, index) => (
-              <li key={entry.id} className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <span
-                    className={`text-3xl font-semibold w-8 text-center ${
-                      index < 3 ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
-                    {`${index + 1}`}
+          {isLoading ? (
+            <div>Loading...</div>
+          ) : (
+            <ul className="space-y-4">
+              {topScores.map((entry, index) => (
+                <li
+                  key={entry.id}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center space-x-4">
+                    <span
+                      className={`text-3xl font-semibold w-8 text-center ${
+                        index < 3 ? "text-primary" : "text-muted-foreground"
+                      }`}
+                    >
+                      {`${index + 1}`}
+                    </span>
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage
+                        src={`data:image/svg+xml;utf8,${encodeURIComponent(
+                          createAvatar(dylan, { seed: entry.name }).toString()
+                        )}`}
+                        alt={entry.name}
+                      />
+                      <AvatarFallback>
+                        {entry.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-lg font-medium">{entry.name}</span>
+                  </div>
+                  <span className="text-lg font-semibold">
+                    {entry.quizScore.toLocaleString()}
                   </span>
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage
-                      src={`data:image/svg+xml;utf8,${encodeURIComponent(
-                        createAvatar(dylan, { seed: entry.name }).toString()
-                      )}`}
-                      alt={entry.name}
-                    />
-                    <AvatarFallback>
-                      {entry.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-lg font-medium">{entry.name}</span>
-                </div>
-                <span className="text-lg font-semibold">
-                  {entry.quizScore.toLocaleString()}
-                </span>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </div>
