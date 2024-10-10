@@ -54,6 +54,9 @@ export function NavigationBar() {
                   A simple quiz project that tests your understanding about
                   substance abuse
                 </ListItem>
+                <ListItem href="/projects/quiz/leaderboard" title="Leaderboard">
+                  View the top scores and see how you rank against others in the quiz.
+                </ListItem>
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>

@@ -18,13 +18,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import confetti from "canvas-confetti";
 import { useRouter } from "next/navigation";
+import { updateLeaderboard } from "@/app/server/user";
+import { Input } from "@/components/ui/input";
 
 enum QuestionState {
   Hidden,
@@ -38,7 +49,7 @@ interface Question {
   answer: number;
 }
 
-const formSchema = z.object({
+const quizFormSchema = z.object({
   answer: z.string({
     required_error: "Please select an option",
   }),
@@ -96,15 +107,16 @@ export default function Quiz() {
   );
   const [questionState, setQuestionState] = useState(QuestionState.Hidden);
   const router = useRouter();
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const quizForm = useForm<z.infer<typeof quizFormSchema>>({
+    resolver: zodResolver(quizFormSchema),
     defaultValues: {
       answer: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onQuizSubmit(values: z.infer<typeof quizFormSchema>) {
     if (currentQuestion.answer.toString() === values.answer.toString()) {
       setQuestionState(QuestionState.Correct);
       setScore(score + 1);
@@ -113,15 +125,14 @@ export default function Quiz() {
     }
 
     if (currentQuestionIdx === questionList.length - 1) {
-      
       setOpenDialog(true);
 
       const end = Date.now() + 3 * 1000; // 3 seconds
       const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
-   
+
       const frame = () => {
         if (Date.now() > end) return;
-   
+
         confetti({
           particleCount: 2,
           angle: 60,
@@ -139,12 +150,18 @@ export default function Quiz() {
           origin: { x: 1, y: 0.5 },
           colors: colors,
         });
-   
+
         requestAnimationFrame(frame);
       };
-   
+
       frame();
     }
+  }
+
+  function onLeaderboardSubmit() {
+    const name: string = nameInputRef.current?.value || "Anonymous";
+    updateLeaderboard(name, score);
+    router.push("/projects/quiz/leaderboard");
   }
 
   function handleNextQuestion() {
@@ -152,7 +169,7 @@ export default function Quiz() {
       setCurrentQuestionIndex(currentQuestionIdx + 1);
       setCurrentQuestion(questionList[currentQuestionIdx + 1]);
       setQuestionState(QuestionState.Hidden);
-      form.reset({
+      quizForm.reset({
         answer: "",
       });
     }
@@ -160,19 +177,31 @@ export default function Quiz() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-r from-black to-accent">
-      
       <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
         <AlertDialogContent className="text-center">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-center">Congratulations!!!</AlertDialogTitle>
+            <AlertDialogTitle className="text-center">
+              Congratulations!!!
+            </AlertDialogTitle>
           </AlertDialogHeader>
-          <AlertDialogDescription className="text-4xl">
+          <div className="text-4xl">
             {score} / {questionList.length}
-          </AlertDialogDescription>
+          </div>
+          <div className="px-10">
+            <Input ref={nameInputRef} className="mt-5" placeholder="Name" />
+          </div>
+          <AlertDialogDescription></AlertDialogDescription>
           <AlertDialogFooter className="sm:justify-center mt-5">
-            <AlertDialogAction onClick={() => {
-              router.push("/");
-            }}>Back to home</AlertDialogAction>
+            <AlertDialogCancel
+              onClick={() => {
+                router.push("/projects/quiz/leaderboard");
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={onLeaderboardSubmit}>
+              Submit
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -185,11 +214,14 @@ export default function Quiz() {
           </CardTitle>
         </CardHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Form {...quizForm}>
+          <form
+            onSubmit={quizForm.handleSubmit(onQuizSubmit)}
+            className="space-y-6"
+          >
             <CardContent className="text-left">
               <FormField
-                control={form.control}
+                control={quizForm.control}
                 name="answer"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
@@ -209,7 +241,9 @@ export default function Quiz() {
                                 <RadioGroupItem
                                   value={index.toString()}
                                   id={`${index}`}
-                                  disabled={questionState !== QuestionState.Hidden}
+                                  disabled={
+                                    questionState !== QuestionState.Hidden
+                                  }
                                 />
                               </FormControl>
 
