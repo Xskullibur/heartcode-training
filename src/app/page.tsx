@@ -29,7 +29,7 @@ export default function Home() {
   };
 
   return (
-    <div className="snap-y snap-mandatory overflow-y-scroll h-screen no-scrollbar">
+    <div className="snap-y snap-mandatory h-screen overflow-y-scroll no-scrollbar">
       <BackgroundBeamsWithCollision className="min-h-screen flex flex-col justify-center snap-always snap-center">
         <div className="font-bold text-5xl text-center mb-4 text-red-500">
           #<FlipWords words={words} />

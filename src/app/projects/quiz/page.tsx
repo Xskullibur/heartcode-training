@@ -37,6 +37,7 @@ import { useRouter } from "next/navigation";
 import { updateLeaderboard } from "@/app/server/user";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { WobbleCard } from "@/components/ui/wobble-card";
 
 enum QuestionState {
   Hidden,
@@ -98,6 +99,8 @@ const questionList: Question[] = [
     answer: 2,
   },
 ];
+
+const colorList = ['bg-blue-900'];
 
 export default function Quiz() {
   const [openDialog, setOpenDialog] = useState(false);
@@ -224,9 +227,9 @@ export default function Quiz() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Card className="w-full max-w-lg">
+      <WobbleCard containerClassName={`w-1/2 ${colorList[currentQuestionIdx % colorList.length]}`}>
         <CardHeader className="text-center">
-          <div className="flex justify-center mt-4 mb-5 mx-4">
+          <div className="flex justify-center mb-5 mx-4">
             <Progress value={progressPercentage} />
           </div>
           <CardTitle className="text-2xl font-bold">
@@ -285,14 +288,14 @@ export default function Quiz() {
 
               {questionState === QuestionState.Correct && (
                 <Alert className="mt-8" variant={"success"}>
-                  <AlertTitle>Correct!</AlertTitle>
+                  <AlertTitle className="text-lg">Correct!</AlertTitle>
                 </Alert>
               )}
 
               {questionState === QuestionState.Wrong && (
                 <Alert className="mt-8" variant={"destructive"}>
-                  <AlertTitle>Incorrect!</AlertTitle>
-                  <AlertDescription>
+                  <AlertTitle className="text-lg">Incorrect!</AlertTitle>
+                  <AlertDescription className="font-bold">
                     The correct answer is:{" "}
                     {currentQuestion.options[currentQuestion.answer]}
                   </AlertDescription>
@@ -312,7 +315,7 @@ export default function Quiz() {
             </CardFooter>
           </form>
         </Form>
-      </Card>
+      </WobbleCard>
     </div>
   );
 }
