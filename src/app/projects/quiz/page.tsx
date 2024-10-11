@@ -36,6 +36,7 @@ import confetti from "canvas-confetti";
 import { useRouter } from "next/navigation";
 import { updateLeaderboard } from "@/app/server/user";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 
 enum QuestionState {
   Hidden,
@@ -106,6 +107,8 @@ export default function Quiz() {
     questionList[currentQuestionIdx]
   );
   const [questionState, setQuestionState] = useState(QuestionState.Hidden);
+  const [dialogMessage, setDialogMessage] = useState("Congratulations!!!");
+  const [progressPercentage, setProgressPercentage] = useState(0);
   const router = useRouter();
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -125,6 +128,7 @@ export default function Quiz() {
     }
 
     if (currentQuestionIdx === questionList.length - 1) {
+      updateMessage();
       setOpenDialog(true);
 
       const end = Date.now() + 3 * 1000; // 3 seconds
@@ -172,23 +176,37 @@ export default function Quiz() {
       quizForm.reset({
         answer: "",
       });
+
+      setProgressPercentage(((currentQuestionIdx + 1) / questionList.length) * 100);
+    }
+  }
+
+  function updateMessage() {
+    const percentageScore = (score / questionList.length) * 100;
+
+    if (percentageScore >= 80) {
+      setDialogMessage("Congratulations!!!");
+    } else if (percentageScore >= 50) {
+      setDialogMessage("Good Job!");
+    } else {
+      setDialogMessage("Keep Trying!");
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-r from-black to-accent">
+    <div className="min-h-screen w-full h-full flex items-center justify-center p-4 bg-gradient-to-r from-black to-accent">
       <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
         <AlertDialogContent className="text-center">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">
-              Congratulations!!!
+              {dialogMessage}
             </AlertDialogTitle>
           </AlertDialogHeader>
           <div className="text-4xl">
             {score} / {questionList.length}
           </div>
           <div className="px-10">
-            <Input ref={nameInputRef} className="mt-5" placeholder="Name" />
+            <Input ref={nameInputRef} className="mt-4" placeholder="Name" />
           </div>
           <AlertDialogDescription></AlertDialogDescription>
           <AlertDialogFooter className="sm:justify-center mt-5">
@@ -208,7 +226,9 @@ export default function Quiz() {
 
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4"></div>
+          <div className="flex justify-center mt-4 mb-5 mx-4">
+            <Progress value={progressPercentage} />
+          </div>
           <CardTitle className="text-2xl font-bold">
             {currentQuestion.question}
           </CardTitle>
@@ -219,7 +239,7 @@ export default function Quiz() {
             onSubmit={quizForm.handleSubmit(onQuizSubmit)}
             className="space-y-6"
           >
-            <CardContent className="text-left">
+            <CardContent className="text-left py-4 px-12">
               <FormField
                 control={quizForm.control}
                 name="answer"
